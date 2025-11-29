@@ -1,4 +1,4 @@
-import React from "react";
+import React,  { useState }  from "react";
 import {
   View,
   Text,
@@ -6,8 +6,11 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  Modal,
+  TextInput,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 
 // Mock teams data - replace with your store data
 const TEAMS = [
@@ -85,6 +88,34 @@ export default function TeamsScreen({ navigation }: any) {
     navigation.navigate("TeamDetail", { teamId });
   };
 
+    // Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [teamName, setTeamName] = useState("");
+  const [teamImage, setTeamImage] = useState<string | null>(null);
+
+  // Pick Image
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setTeamImage(result.assets[0].uri);
+    }
+  };
+
+  const handleCreateTeam = () => {
+    console.log("Team Name:", teamName);
+    console.log("Image:", teamImage);
+
+    // (Later: send to backend)
+    setShowModal(false);
+    setTeamName("");
+    setTeamImage(null);
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -98,7 +129,7 @@ export default function TeamsScreen({ navigation }: any) {
             <Text style={styles.headerSubtitle}>You're part of {TEAMS.length} teams</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.addButton}>
+        <TouchableOpacity style={styles.addButton} onPress={() => setShowModal(true)}>
           <FontAwesome5 name="plus" size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
@@ -117,6 +148,45 @@ export default function TeamsScreen({ navigation }: any) {
           />
         ))}
       </ScrollView>
+       {/* ⭐ Add Team Modal */}
+            <Modal visible={showModal} transparent animationType="slide">
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalBox}>
+                  <Text style={styles.modalTitle}>Create New Team</Text>
+
+                  {/* Team Name */}
+                  <TextInput
+                    placeholder="Team Name"
+                    style={styles.input}
+                    value={teamName}
+                    onChangeText={setTeamName}
+                  />
+
+                  {/* Image Picker */}
+                  <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+                    {teamImage ? (
+                      <Image source={{ uri: teamImage }} style={styles.previewImage} />
+                    ) : (
+                      <>
+                        <FontAwesome5 name="camera" size={20} color="#777" />
+                        <Text style={styles.imagePickerText}>Upload Team Image</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  {/* Buttons */}
+                  <View style={styles.modalButtons}>
+                    <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowModal(false)}>
+                      <Text style={styles.btnText}>Cancel</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.createBtn} onPress={handleCreateTeam}>
+                      <Text style={styles.btnTextWhite}>Create</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
     </View>
   );
 }
@@ -191,6 +261,81 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 100,
   },
+
+
+  /* Modal */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  modalBox: {
+    backgroundColor: "#FFF",
+    padding: 20,
+    borderRadius: 20,
+  },
+
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+
+  input: {
+    backgroundColor: "#F0F0F0",
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+
+  imagePicker: {
+    height: 120,
+    backgroundColor: "#EFEFEF",
+    borderRadius: 10,
+    marginBottom: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#DDD",
+  },
+
+  previewImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
+  },
+
+  imagePickerText: { marginTop: 6, color: "#777" },
+
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 15,
+  },
+
+  cancelBtn: {
+    flex: 1,
+    padding: 12,
+    backgroundColor: "#DDD",
+    borderRadius: 10,
+    marginRight: 10,
+  },
+
+  createBtn: {
+    flex: 1,
+    padding: 12,
+    backgroundColor: "#2E86DE",
+    borderRadius: 10,
+    marginLeft: 10,
+  },
+
+  btnText: { textAlign: "center", fontWeight: "600" },
+
+  btnTextWhite: { textAlign: "center", fontWeight: "600", color: "#FFF" },
+
   teamCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
